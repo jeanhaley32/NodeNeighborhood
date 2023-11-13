@@ -1,0 +1,10 @@
+# Crawler Design Propsal:
+
+1. __Query Resolver__: Server supporting an API for all user related network queries. Initial version can just provide a list of active nodes. In later versions could support queries related to geographic location, freshness, capacity etc. For initial version RESTful API would suffice, for later versions we might consider graphQL.
+
+2.__NodeDB__: A database of all the nodes visited by NN, for each node the system 
+tracks the ENR id, time added, latest visit and approximate geographic location etc.
+
+3. __Delegator__: A control process for keeping the NodeDB comprehensive and fresh. It manages a priorety queue of nodes based on the priority to visit the node. Upon initialization the queue includes a list of hard coded boot nodes. A node enters the queue when it appears in the list of neighbors of a node that already entered the queue, and it remains in the queue until it is determined that it is inactive. When a node is fist entered, it has status as unvisited, once it is visited it moves to a status of visited with time elapsed since last visit. THe system prioritizes nodes based on status, time elapsed since last visit, location, centrality etc. The objective is to keep the image of the network in the DB as fresh and relevant as possible. 
+
+4. __Crawler Node__: Crawler nodes connect to Ethereum nodes, extract from them a list of neighbors. A crawler node will receive a connection request from the delegator, with a node ID to connected and a period to remain connected. Upon connecting to a new node, it extracts the neighbors of the new node and send it to the delegator. It updates the delegator if it is unable to connect to a node or a connection is lost before the end of the connection period. Whenever a connection is lost, the crawler requests from the delegator a new node to connect to. 
