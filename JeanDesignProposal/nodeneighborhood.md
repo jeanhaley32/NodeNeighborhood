@@ -45,7 +45,7 @@ A worker is an ephemeral Go Routine spawned from the Work Delegator to perform a
 
 - Spawned from a work item, a worker is provided with an "action" to perform, and the appropriate contextual variables
   Needed to succesfully execute that function. 
-- Upon execution, the result is bundles and sent down a destination channel. 
+- Upon execution, the result is bundled and sent down a destination channel. 
 - Upon a Receipt request, the worker shuts down. 
 
  > For the purpose of this crawler, the action is going to be to start up a ephemeral Etherium Node, and obtain the nodes most updated information, and as many neighbors as it can associate with that node. It then communicates this to the Node Ingestor to act upon that information. 
