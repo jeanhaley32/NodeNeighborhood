@@ -58,7 +58,6 @@ A worker is an ephemeral Go Routine spawned from the Work Delegator to perform a
  
  It is responsible for the following:
  - Fields New Nodes from the Node Ingestor Channel.
-    0. if the Worker reports that a Node was unable to be contacted, it will decrement freshness of a node. 
     1. Checks to see if node has been seen previously and if so, if the sequence number has changed.  
         1. If node has been seen, and the sequence number is the same as what is listed in "Seen Nodes".
             1. It will increment freshness for that node in the "seen list" by 1. 
@@ -100,3 +99,14 @@ The Freshness tracker will be responsible for this, and will also be responsible
 1. I'd like to make a metrics path that derives values from work items. I.E. average work time, how much work performed every second etc. This would involve obtaining information from work items, and crunching those numbers elswhere, maybe logging them. We can use this information to create a metrics dashboard that can be used to monitor the health of the service. 
 
 2. Right now, this is going to be a monolithic applicaiton, comprised of multiple goroutines. In the future, it may be fun to set this up as a series of microservices communicating through GRPC protobufs. I'm not sure how that would change things, or if there is even a benefit to this decentralization of labor, but it would be an educationation experience. 
+
+### Caveates
+___
+
+There is a gap in the design philosophy between which go routines run as a single operations, and which divides it's work amongst workers. 
+
+The assumption i'm running off of is that the only items of work that will actually create viable bottlenecks are the spawning of ephermeral nodes for the discovery of other nodes. once obtained, everything else should be fairly quick, as work will be done through a decision tree and all operations require at most the modification of a locally stored table. I have made the databse operations vauge on purpose.
+
+The idea would be to pass responsibility down to a whole new path that will then take on the burden of modifying the database, and exposing that database to the outside world. 
+
+Depending on how this crawler will communicate with the database, this operation may also be time intensive. Leaving the worker's job as non-specific ` we pass an action, and contextual variables` we could make communication as easy as bundingle write requets into work items, and having the work delegator delegate this job to a worker. I'm unsure if this is a reasonable idea. we may run into problem with multiple workers attempting to write similar changes to the database at once. This may not be an issue if we can adequately hash each change and compare it to already stored values to see if there is any change. Or it may be enough to compare sequence numbers. 
