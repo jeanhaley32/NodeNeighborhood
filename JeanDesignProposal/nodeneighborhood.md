@@ -158,14 +158,14 @@ The Freshness tracker will be responsible for this and will also be responsible 
 2. If it doesn't fall to zero, or below that target threshold, then we send a request to the ingester to update the freshness value to reflect.
 3. For Every Node that hasn't been checked since the last epoch (Time in which freshness tracker runs), we pass a new work item to the work delegator. This way we continuously check the Ethereum network for changes.
 
-### Extra Credit
+## Extra Credit
 
 ---
 
 1. I'd like to make a metrics path that derives values from work items. I.E. average work time, how much work performed every second etc. This would involve obtaining information from work items, and crunching those numbers elsewhere, maybe logging them. We can use this information to create a metrics dashboard that can be used to monitor the health of the service.
 2. Right now, this is going to be a monolithic application comprised of multiple goroutines. In the future, it may be beneficial to set this up as a series of microservices communicating through [GRPC ProtoBuffs](https://grpc.io/docs/what-is-grpc/introduction/). I'm not sure how that would change things, or if there is even a benefit to this decentralization of labor, but it would be an educational experience.
 
-### Caveats
+## Caveats
 
 ---
 
