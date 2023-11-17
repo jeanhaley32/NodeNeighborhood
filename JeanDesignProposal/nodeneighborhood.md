@@ -64,7 +64,7 @@ The Concept of work is an idea worth its own segment.
 the struct design for work would look something like this:
 
 ```go
-type node struct {
+type work struct {
    uid      uint // a unique identifier for this piece of work.
    state    bool  // 0 is not started 1 is finished
    start    time.Time // Time Work Started
