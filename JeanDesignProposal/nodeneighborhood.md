@@ -2,7 +2,7 @@
 
 The Crawler I have in mind should have a series of features.
 
-Each Node will be its own ENR record, and a neighbors list, plus information useful for making decisions based on its.
+Each Node will be its own ENR record, and a neighbors list, plus information useful for keeping track of that node's reliability.
 
 ```
 type Node struct {
