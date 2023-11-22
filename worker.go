@@ -1,34 +1,46 @@
 package main
 
-import "time"
+import (
+	"context"
+	"time"
 
-// Worker is a simple goroutine that performs a task, and sends the result to the writer.
-// It then signals to the delegator that the work is done.
+	"github.com/google/uuid"
+)
 
-type worker struct {
-	target   string           // UNique Identifier for the target.
-	halt     chan interface{} // channel to receive halt signal.
-	writerCh chan interface{} // Channel to send complete work to the writer.
-	done     chan workItem    // Done chanel, used to signal to the delegator that work is done.
+type (
+	workch  chan job                                 // channel for the communication of jobs.
+	payload []byte                                   // The returned value of the task.
+	success bool                                     // Whether the task was successful or not.
+	task    func(context.Context) (success, payload) // The task to be performed
+)
+type job struct {
+	id      int                                      // Unique id of the job
+	task    func(context.Context) (success, payload) // The task to be performed
+	success success                                  // Whether the task was successful or not.
+	vars    map[string]any                           // Variables used by the task.
+	p       payload                                  // The returned value of the task.
+	metrics struct {                                 // Metrics of the task.
+		created   time.Time     // The time the task was created.
+		start     time.Time     // start time of task. Used to calculate the time taken to complete the task.
+		taskTime  time.Duration // The Time taken to complete the task.
+		completed time.Time     // The time the task was completed.
+		complete  bool          // Whether the task is complete or not.
+	}
+	chBundle struct { // Bundle of channels used for communication.
+		parent         workch // The parent channel.
+		localComms     workch // The local channel.
+		targetIngester workch // The target channel.
+	}
 }
 
-// Work waits for a halt signal, and if none is received runs a 'task' that returns
-// an empty interface, and sends the result to the writer.
-
-func (w *worker) run(task func(target string) interface{}) {
-	startTime := time.Now()
-	for {
-		select {
-		case <-w.halt:
-			return
-		default:
-			// perform task, and send response to the writer.
-			w.writerCh <- task(w.target)
-			w.done <- workItem{
-				target:   w.target,              // Send the unique identifier back to the delegator.
-				action:   done,                  // Signal that work is done.
-				execTime: time.Since(startTime), // Calculate the time it took to perform the task.
-			} // Signal that work is done.
-		}
+// newJob creates a new job.
+func NewJob(t task, v map[string]any) *job {
+	j := &job{
+		id:      uuid.New().ID(),
+		task:    t,
+		success: false,
+		vars:    v,
 	}
+	j.metrics.created = time.Now()
+	return j
 }
