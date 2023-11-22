@@ -14,7 +14,7 @@ type (
 	task    func(context.Context) (success, payload) // The task to be performed
 )
 type job struct {
-	id      int                                      // Unique id of the job
+	id      uint32                                   // Unique id of the job
 	task    func(context.Context) (success, payload) // The task to be performed
 	success success                                  // Whether the task was successful or not.
 	vars    map[string]any                           // Variables used by the task.
