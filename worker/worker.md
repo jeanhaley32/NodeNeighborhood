@@ -58,3 +58,19 @@ Work items are comprised of:
     - localComms - Channel the worker will listen on.
     - parent - Channel of the parent process that spawned the worker
     - targetIngester - Target channel to send payload.
+
+
+
+# Methods
+
+## execute()
+ - non-public
+ - Executes the job's task.
+ - populates job payload. 
+ - Sets state information. 
+   - Task start time
+   - Task Completion Time. 
+   - Task runtime
+   - Task Completion Bool
+   - Task success Bool
+## Run()

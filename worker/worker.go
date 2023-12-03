@@ -1,46 +1,99 @@
 package worker
 
+// Worker is a package that allows for the execution of tasks in a seperate thread.
 import (
-	"context"
-	"time"
-
 	"github.com/google/uuid"
 )
 
 type (
-	workch  chan job                                 // channel for the communication of jobs.
-	payload []byte                                   // The returned value of the task.
-	success bool                                     // Whether the task was successful or not.
-	task    func(context.Context) (success, payload) // The task to be performed
+	VMap          map[string]any             // Variables used by the task.
+	TaskSignature func(VMap) (error, []byte) // The task Signature expected by the worker.
+
 )
+
 type job struct {
-	id      uint32                                   // Unique id of the job
-	task    func(context.Context) (success, payload) // The task to be performed
-	success success                                  // Whether the task was successful or not.
-	vars    map[string]any                           // Variables used by the task.
-	p       payload                                  // The returned value of the task.
-	metrics struct {                                 // Metrics of the task.
-		created   time.Time     // The time the task was created.
-		start     time.Time     // start time of task. Used to calculate the time taken to complete the task.
-		taskTime  time.Duration // The Time taken to complete the task.
-		completed time.Time     // The time the task was completed.
-		complete  bool          // Whether the task is complete or not.
-	}
-	chBundle struct { // Bundle of channels used for communication.
-		parent         workch // The parent channel.
-		localComms     workch // The local channel.
-		targetIngester workch // The target channel.
+	id      uint32 // Unique id of the job
+	task    task   // The task to be performed
+	vars    VMap   // Variables used by the task.
+	payload []byte // The returned value of the task.
+	e       error  // The error returned by the task.
+
+}
+
+type task interface { // The task interface.
+	Func() TaskSignature // Returns the task signature.
+}
+
+// Adds an entry to the varible map.
+func (v *VMap) Set(key string, value any) {
+	(*v)[key] = value
+}
+
+// Returns the value associated with the key.
+func (v *VMap) Get(key string) any {
+	return (*v)[key]
+}
+
+// Removes the entry associated with the key.
+func (v *VMap) Delete(key string) {
+	delete(*v, key)
+}
+
+// Appends multiple entries to the variable map.
+func (v *VMap) SetKeys(m map[string]any) {
+	for key, val := range m {
+		(*v)[key] = val
 	}
 }
 
-// newJob creates a new job.
-func NewJob(t task, v map[string]any) *job {
-	j := &job{
-		id:      uuid.New().ID(),
-		task:    t,
-		success: false,
-		vars:    v,
+// Creates a new, nil variable map.
+func NewVmap() *VMap {
+	return &VMap{}
+}
+
+// constructs a new job.
+func NewWorker(t task, v map[string]any) *job {
+	return &job{
+		id:   uuid.New().ID(),
+		task: t,
+		vars: v,
 	}
-	j.metrics.created = time.Now()
-	return j
+}
+
+// Returns the unique id of the job.
+func (j *job) ID() uint32 {
+	return j.id
+}
+
+// Return Error value of the job.
+func (j *job) Error() error {
+	return j.e
+}
+
+// Returns the "variable map" used by the job.
+// A pointer is returned, which allows the user to modify the map via
+// the SetKeys, Get, and Delete methods.
+func (j *job) GetVmap() *VMap {
+	return &j.vars
+}
+
+func (j *job) execute(ch chan any) {
+	err, payload := j.task.Func()(j.vars)
+	if err != nil {
+		j.e = err
+		return
+	}
+	j.e = nil
+	j.payload = payload
+	ch <- nil // Signal that the job is done.
+}
+
+// Run executes the job's task as a goroutine.
+// The job's error value is set to the error returned by the task.
+// The job's payload value is set to the payload returned by the task.
+// Run takes in a waitgroup, which is used to wait for the job to finish.
+func (j *job) Run() chan any {
+	ch := make(chan any)
+	go j.execute(ch)
+	return ch
 }
