@@ -1,14 +1,19 @@
 package delegator
-// Delegator Processes jobs from a `work` channel, starting workers, and keeping track of them.
-// Delegator will also handle andy communications with running wokers.
-// Actions are objects received on the `admin` channel.
-// Jobs are received on the `work` channel. 
+
 import ()
 
 type worker interface {
-	// define the worker interface.	
+	Run() chan any
 }
 
+type directive interface {
+	Action() string // returns the action to be performed.
+	Target() uint32 // returns the target of the action.
+}
+
+
 type Delegator struct {
-	workers map[uint32]*Worker // A map of all the workers.
+	work    chan *worker // channel to receive jobs on.
+	admin 	chan *directive // channel to receive directives on.
+	workers map[uint32]*worker // A map of all the workers.
 }

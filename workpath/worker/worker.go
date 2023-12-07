@@ -5,6 +5,8 @@ package worker
 // used with the delegator package.
 // The task is defined as an enum, which allows for easy addition of new tasks.
 import (
+	"workpath/derectives"
+
 	"github.com/google/uuid"
 )
 
@@ -27,7 +29,7 @@ type task interface { // The task interface.
 	Func() TaskSignature // Returns the task signature.
 }
 
-// Adds an entry to the varible map.
+// Adds an entry to the variable map.
 func (v *VMap) Set(key string, value any) {
 	(*v)[key] = value
 }
@@ -80,7 +82,7 @@ func (j *job) GetVmap() *VMap {
 	return &j.vars
 }
 
-func (j *job) execute(ch chan any) {
+func (j *job) execute(ch chan derectives.Directive) {
 	err, payload := j.task.Func()(j.vars)
 	if err != nil {
 		j.e = err
@@ -88,15 +90,13 @@ func (j *job) execute(ch chan any) {
 	}
 	j.e = nil
 	j.payload = payload
-	ch <- nil // Signal that the job is done.
+	ch <- *derectives.NewDoneDirective(j.id)
 }
 
 // Run executes the job's task as a goroutine.
 // The job's error value is set to the error returned by the task.
 // The job's payload value is set to the payload returned by the task.
 // Run takes in a waitgroup, which is used to wait for the job to finish.
-func (j *job) Run() chan any {
-	ch := make(chan any)
+func (j *job) Run(ch chan derectives.Directive) {
 	go j.execute(ch)
-	return ch
 }

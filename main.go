@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
+	"workpath/derectives"
 	"workpath/worker"
 )
 
 func main() {
+	dchan := make(chan derectives.Directive)
 	w := worker.NewWorker(HelloWorld, nil)
-	wchan := w.Run()
+	w.Run(dchan)
 	if w.Error() != nil {
 		fmt.Println(w.Error())
 	}
-	<-wchan
+	<-dchan
 }
