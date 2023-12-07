@@ -5,7 +5,7 @@ package main
 
 import (
 	"fmt"
-	"worker"
+	"workpath/worker"
 )
 
 type TaskType int64

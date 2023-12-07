@@ -3,6 +3,4 @@ go 1.21.5
 use (
 	.
 	./workpath
-	./workpath/delegator
-	./workpath/worker
 )

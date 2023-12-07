@@ -1,4 +1,4 @@
-package workpath
+package delegator
 // Delegator Processes jobs from a `work` channel, starting workers, and keeping track of them.
 // Delegator will also handle andy communications with running wokers.
 // Actions are objects received on the `admin` channel.
