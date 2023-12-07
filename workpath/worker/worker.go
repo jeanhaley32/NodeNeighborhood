@@ -1,6 +1,9 @@
 package worker
 
-// Worker is a package that allows for the execution of tasks in a seperate thread.
+// Worker is a package designed to execute a task in a goroutine,
+// with a variable map and task specific metrics. It is designed to be
+// used with the delegator package.
+// The task is defined as an enum, which allows for easy addition of new tasks.
 import (
 	"github.com/google/uuid"
 )
