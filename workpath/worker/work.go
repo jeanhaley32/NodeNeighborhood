@@ -1,104 +1,70 @@
 package worker
 
-// Worker is a package designed to execute a task in a goroutine,
-// with a variable map and task specific metrics. It is
-// designed to be used with the delegator package. The task
-// is defined as an enum, which allows for easy addition of new tasks.
-import (
-	"sync"
-	"workpath/delegator"
+// The work encapsulates a job's task to perform.
+// It also contains the payload, which is the result
+// of the task.
+// The work is designed to be executed in a goroutine.
+// The work is considered done when the done flag is set to true.
+type work struct {
+	task    task
+	done    bool
+	payload []byte
+	e       error
+	vars    VMap
+}
 
-	"github.com/google/uuid"
+type Work interface {
+	SetPayload(p []byte)
+	GetPayload() []byte
+	Error() error
+	IsDone() bool
+	GetVmap() *VMap
+	execute()
+}
 
-	"log"
+type (
+	// The task Signature expected by the worker.
+	TaskSignature func(VMap) (error, []byte)
+	task          interface { // The task interface.
+		Func() TaskSignature
+	}
 )
 
-// Define enums used to indicate state of the job.
-type state int64
-
-const (
-	running state = iota
-	completed
-	failed
-)
-
-func (a state) String() string {
-	switch a {
-	case running:
-		return "running"
-	case completed:
-		return "completed"
-	case failed:
-		return "failed"
-	}
-	return ""
+// Set work payload.
+func (w *work) SetPayload(p []byte) {
+	w.payload = p
 }
 
-type job struct {
-	id   uint32 // Unique id of the job
-	work work   // The work to be done.
+// Get work payload.
+func (w *work) GetPayload() []byte {
+	return w.payload
 }
 
-// The task interface.
-type task interface {
-	// defines the task signature.
-	Func() TaskSignature
+// Return Error value of the job.
+func (w *work) Error() error {
+	return w.e
 }
 
-// return the state of the job.
-func (j *job) GetState() state {
-	w := &j.work
-	if !w.IsDone() {
-		return running
-	}
-	if w.Error() != nil {
-		return failed
-	}
-	return completed
+func (w *work) IsDone() bool {
+	return w.done
 }
 
-// Returns the unique id of the job.
-func (j *job) ID() uint32 {
-	return j.id
+// Returns the "variable map" used by the job.
+// A pointer is returned, modify the map via
+// the SetKeys, Get, and Delete methods.
+func (w *work) GetVmap() *VMap {
+	return &w.vars
 }
 
-// Runs the job in a goroutine.
-func (j *job) Run(done chan delegator.Directive) {
-	w := &j.work
-	var wg sync.WaitGroup
+func (w *work) execute() {
 	defer func() {
-		j.logError()
-		// Log the completion of the job.
-		log.Printf("Job %d %v", j.id, j.GetState().String())
-		done <- delegator.NewDoneDirective(j.id)
+		w.done = true
 	}()
-	wg.Add(1)
-	go w.execute(&wg)
-	wg.Wait()
-}
-
-// handle any errors returned by the task.
-// If the error is not nil, it is logged.
-func (j *job) logError() {
-	if j.work.Error() != nil {
-		log.Println(j.work.Error())
+	err, payload := w.task.Func()(w.vars)
+	w.SetPayload(payload)
+	if err != nil {
+		w.e = err
+		return
 	}
-}
-
-// Creates a new, nil variable map.
-func NewVmap() *VMap {
-	return &VMap{}
-}
-
-// constructs a new job.
-func NewJob(t task, v map[string]any) *job {
-	w := work{
-		task: t,
-		vars: v,
-		done: false,
-	}
-	return &job{
-		id:   uuid.New().ID(),
-		work: w,
-	}
+	w.e = nil
 }
