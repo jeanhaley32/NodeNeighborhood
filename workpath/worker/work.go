@@ -69,7 +69,7 @@ func (j *job) Run(done chan delegator.Directive) {
 	defer func() {
 		j.logError()
 		// Log the completion of the job.
-		log.Printf("Job %d finished %d", j.id, j.GetState())
+		log.Printf("Job %d %v", j.id, j.GetState().String())
 		done <- delegator.NewDoneDirective(j.id)
 	}()
 	wg.Add(1)
