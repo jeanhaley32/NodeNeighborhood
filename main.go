@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"workpath/derectives"
+	"time"
+	"workpath/delegator"
 	"workpath/worker"
 )
 
 func main() {
-	dchan := make(chan derectives.Directive)
-	w := worker.NewWorker(HelloWorld, nil)
-	w.Run(dchan)
-	if w.Error() != nil {
-		fmt.Println(w.Error())
+	dchan := make(chan delegator.Directive)
+	w := worker.NewJob(HelloWorld, nil)
+	for {
+		w.Run(dchan)
+		<-dchan
+		time.Sleep(3 * time.Second)
 	}
-	<-dchan
 }
