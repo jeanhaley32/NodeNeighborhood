@@ -7,6 +7,7 @@ package worker
 import (
 	"fmt"
 	"sync"
+	"time"
 	"workpath/delegator"
 
 	"github.com/google/uuid"
@@ -36,8 +37,11 @@ func (a state) String() string {
 }
 
 type job struct {
-	id   uint32 // Unique id of the job
-	work work   // The work to be done.
+	id        uint32    // Unique id of the job.
+	created   time.Time // The time the job was created.
+	started   time.Time // The time the job was started.
+	completed time.Time // The time the job was completed.
+	work      work      // The work to be done.
 }
 
 // Worker interface represents a job that can be executed.
@@ -95,19 +99,22 @@ func NewVmap() *VMap {
 
 // constructs a new job.
 func NewJob(t task, v map[string]any) *job {
-	w := work{
-		task: t,
-		vars: v,
-		done: false,
-	}
-	return &job{
-		id:   uuid.New().ID(),
-		work: w,
-	}
+	j := &job{}
+	w := &j.work
+	w.SetTask(t)
+	w.SetVmap(v)
+	j.created = time.Now()
+	j.id = uuid.New().ID()
+	return j
 }
 
 func (j *job) Announce() {
 	// Log the completion of the job.
 	log.Printf("Job %d %v", j.id, j.GetState().String())
 	j.logError()
+}
+
+// returns pointer to the job's work.
+func (j *job) ObtainWork() *work {
+	return &j.work
 }

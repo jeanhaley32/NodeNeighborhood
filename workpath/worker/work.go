@@ -1,10 +1,10 @@
 package worker
 
-// The work encapsulates a job's task to perform.
-// It also contains the payload, which is the result
-// of the task.
-// The work is designed to be executed in a goroutine.
-// The work is considered done when the done flag is set to true.
+// A work object encapsulates the task a job is to perform.
+// It wraps up the task, the payload, and all of the necessary
+// variables needed to perform the task. This can then be passed
+// to the delegator to be executed as a worker, or from the worker
+// to an ingestion point.
 type work struct {
 	task    task
 	done    bool
@@ -24,15 +24,28 @@ type Work interface {
 
 type (
 	// The task Signature expected by the worker.
-	TaskSignature func(VMap) (error, []byte)
+	TaskSignature *func(*VMap) ([]byte, error)
 	task          interface { // The task interface.
 		Func() TaskSignature
 	}
 )
 
+func (w *work) SetTask(t task) {
+	w.task = t
+}
+
 // Set work payload.
 func (w *work) SetPayload(p []byte) {
 	w.payload = p
+}
+
+// Initializes the variable map.
+func (w *work) SetVmap(v map[string]any) {
+	vMap := NewVmap()
+	for k, v := range v {
+		vMap.Set(k, v)
+	}
+	w.vars = *vMap
 }
 
 // Get work payload.
@@ -60,7 +73,8 @@ func (w *work) execute() {
 	defer func() {
 		w.done = true
 	}()
-	err, payload := w.task.Func()(w.vars)
+	t := w.task.Func()
+	payload, err := (*t)(w.GetVmap())
 	w.SetPayload(payload)
 	if err != nil {
 		w.e = err
