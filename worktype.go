@@ -30,3 +30,11 @@ func (t task) Func() worker.TaskSignature {
 	}
 	return nil
 }
+
+func (t task) String() string {
+	switch t {
+	case HelloWorld:
+		return "Hello World"
+	}
+	return "No task defined"
+}

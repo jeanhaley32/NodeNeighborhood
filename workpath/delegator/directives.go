@@ -1,7 +1,5 @@
 package delegator
 
-import "fmt"
-
 // The Directive struct is used to send instructions to the delegator.
 
 type action int64
@@ -35,7 +33,6 @@ func (d *Directive) Target() uint32 {
 // The target is the completed job's id.
 // If sent to the delegator, the delegator will remove the job from the
 func NewDoneDirective(target uint32) Directive {
-	fmt.Println("NewDoneDirective")
 	return Directive{
 		a:      done,
 		target: target,

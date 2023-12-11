@@ -1,5 +1,7 @@
 package worker
 
+import "time"
+
 // A work object encapsulates the task a job is to perform.
 // It wraps up the task, the payload, and all of the necessary
 // variables needed to perform the task. This can then be passed
@@ -27,6 +29,7 @@ type (
 	TaskSignature *func(*VMap) ([]byte, error)
 	task          interface { // The task interface.
 		Func() TaskSignature
+		String() string
 	}
 )
 
@@ -69,16 +72,19 @@ func (w *work) GetVmap() *VMap {
 	return &w.vars
 }
 
-func (w *work) execute() {
+func (w *work) execute() time.Time {
 	defer func() {
 		w.done = true
 	}()
+	// set task start time.
+	starttime := time.Now()
 	t := w.task.Func()
 	payload, err := (*t)(w.GetVmap())
 	w.SetPayload(payload)
 	if err != nil {
 		w.e = err
-		return
+		return starttime
 	}
 	w.e = nil
+	return starttime
 }

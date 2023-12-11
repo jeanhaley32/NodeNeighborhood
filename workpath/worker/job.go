@@ -5,7 +5,6 @@ package worker
 // designed to be used with the delegator package. The task
 // is defined as an enum, which allows for easy addition of new tasks.
 import (
-	"fmt"
 	"sync"
 	"time"
 	"workpath/delegator"
@@ -38,9 +37,9 @@ func (a state) String() string {
 
 type job struct {
 	id        uint32    // Unique id of the job.
-	created   time.Time // The time the job was created.
-	started   time.Time // The time the job was started.
-	completed time.Time // The time the job was completed.
+	created   time.Time // job creation time.
+	started   time.Time // task start time.
+	completed time.Time // task completion time.
 	work      work      // The work to be done.
 }
 
@@ -50,6 +49,9 @@ type Worker interface {
 	ID() uint32
 	Run(done chan delegator.Directive)
 	logError()
+	Announce()
+	ObtainWork() *work
+	RunTime() time.Duration
 }
 
 // return the state of the job.
@@ -59,9 +61,9 @@ func (j *job) GetState() state {
 		if w.Error() != nil {
 			return failed
 		}
-		return running
+		return completed
 	}
-	return completed
+	return running
 }
 
 // Returns the unique id of the job.
@@ -69,19 +71,40 @@ func (j *job) ID() uint32 {
 	return j.id
 }
 
+// Returns the time the job was started.
+func (j *job) StartTime() time.Time {
+	return j.started
+}
+
+// returns the time the job was completed.
+func (j *job) CompletedTime() time.Time {
+	return j.completed
+}
+
+// returns the time the job was created.
+func (j *job) CreatedTime() time.Time {
+	return j.created
+}
+
+// returns the elapsed time of the job.
+func (j *job) RunTime() time.Duration {
+	return j.completed.Sub(j.started)
+}
+
 // Runs the job in a goroutine.
 func (j *job) Run(done chan delegator.Directive) {
 	w := &j.work
 	var wg sync.WaitGroup
-	defer func() {
-		j.Announce()
-		fmt.Println("waiting to send completion message to delegator")
-		done <- delegator.NewDoneDirective(j.id)
-		fmt.Println("passed to delegator")
-	}()
 	wg.Add(1)
-	func() { go w.execute(); wg.Done() }()
+	go func() {
+		j.started = w.execute()
+		wg.Done()
+	}()
 	wg.Wait()
+	j.completed = time.Now()
+	j.Announce()
+	d := delegator.NewDoneDirective(j.id)
+	done <- d
 }
 
 // handle any errors returned by the task.
@@ -103,18 +126,23 @@ func NewJob(t task, v map[string]any) *job {
 	w := &j.work
 	w.SetTask(t)
 	w.SetVmap(v)
-	j.created = time.Now()
 	j.id = uuid.New().ID()
+	j.created = time.Now()
 	return j
 }
 
+// Log the completion of the job.
 func (j *job) Announce() {
-	// Log the completion of the job.
-	log.Printf("Job %d %v", j.id, j.GetState().String())
+	log.Printf("worker %d finished task \"%v\" "+
+		"%v with a Runtime of %vms, roundtrip time: %vms\n",
+		j.id,
+		j.work.task,
+		j.GetState().String(),
+		j.RunTime().Abs().Microseconds(),
+		j.roundtrip().Abs().Microseconds())
 	j.logError()
 }
 
-// returns pointer to the job's work.
-func (j *job) ObtainWork() *work {
-	return &j.work
+func (j job) roundtrip() time.Duration {
+	return time.Since(j.created)
 }
