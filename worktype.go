@@ -5,22 +5,36 @@ package main
 
 import (
 	"fmt"
-	"worker"
+	"workpath/worker"
 )
 
-type TaskType int64
+type task int64
 
 const (
-	HelloWorld TaskType = iota // The task to be performed.
+	HelloWorld task = iota // The task to be performed.
 )
 
-func (t TaskType) Func() worker.TaskSignature {
+// Defining the functions to be returned by the task enum.
+// We are returning a pointer to the function, so that we can define
+// more complex functions, without worrying about passing the function
+// around.
+func (t task) Func() worker.TaskSignature {
 	switch t {
 	case HelloWorld:
-		return func(_ worker.VMap) (error, []byte) {
+		t := func(v *worker.VMap) ([]byte, error) {
 			_, err := fmt.Println("Hello World")
-			return err, nil
+			return nil, err
 		}
+		f := &t
+		return f
 	}
 	return nil
+}
+
+func (t task) String() string {
+	switch t {
+	case HelloWorld:
+		return "Hello World"
+	}
+	return "No task defined"
 }

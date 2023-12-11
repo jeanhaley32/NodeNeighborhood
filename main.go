@@ -2,14 +2,18 @@ package main
 
 import (
 	"fmt"
-	"worker"
+	"time"
+	"workpath/delegator"
+	"workpath/worker"
 )
 
 func main() {
-	worker := worker.NewWorker(HelloWorld, nil)
-	wchan := worker.Run()
-	if worker.Error() != nil {
-		fmt.Println(worker.Error())
+	dchan := make(chan delegator.Directive)
+	w := worker.NewJob(HelloWorld, nil)
+	for {
+		go w.Run(dchan)
+		d := <-dchan
+		fmt.Printf("received Directive: %v %v\n\n", d.Target(), d.Action())
+		time.Sleep(3 * time.Second)
 	}
-	<-wchan
 }
