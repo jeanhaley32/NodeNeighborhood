@@ -48,14 +48,25 @@ type task struct {
 	e       error
 	ctx     context.Context
 }
+
+type (
+	// The task Signature expected by the worker.
+	TaskSignature *func(context.Context) ([]byte, error)
+	operation     interface { // The task interface.
+		Func() TaskSignature
+		String() string
+	}
+)
 ```
 ### operation
-References an operation that conforms to a `TaskSignature` 
+References an `operation` interface that consites of `.Func()`, and a `.String()` methods.  
+- `.Func()` should return a function that conforms to the `TaskSignature` defined as:
 ```
 *func(context.Context) ([]byte, error)
 ```
 An operation's `TaskSignature` should take in context, and return a payload of `[]byte`, and an `error`. 
 
+- `.String()` Will return a stringified name for the operation run.
 
 ### done
  Set upon the completion of a `task's` `operation`. 
