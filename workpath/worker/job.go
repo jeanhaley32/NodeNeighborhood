@@ -47,15 +47,16 @@ type job struct {
 	task      task      // The work to be done.
 }
 
-// Worker interface represents a job that can be executed.
+// Worker is an interface that represents a job or task to be executed.
 type Worker interface {
 	GetState() state
 	ID() uint32
-	Run(done chan delegator.Directive)
-	logError()
-	Announce()
-	ObtainWork() *task
+	StartTime() time.Time
+	CompletedTime() time.Time
+	CreatedTime() time.Time
 	RunTime() time.Duration
+	Run(done chan delegator.Directive)
+	Announce()
 }
 
 // return the state of the job.
