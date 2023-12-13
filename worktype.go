@@ -62,6 +62,8 @@ func (t task) String() string {
 	switch t {
 	case HelloWorld:
 		return "Hello World"
+	case Timeout:
+		return "Mock Timeout test"
 	}
 	return "No task defined"
 }

@@ -99,10 +99,12 @@ func (j *job) RunTime() time.Duration {
 func (j *job) Run(done chan delegator.Directive) {
 	t := &j.task
 	if (*t.GetContext()).Value("deadline") != nil {
-
 		deadline = (*j.task.GetContext()).Value("deadline").(time.Duration)
 	}
+	// Creating a new context with a Timeout. This will be used to
+	// cancel the task if it takes too long.
 	ctx, cancel := context.WithTimeout(*j.task.GetContext(), deadline)
+	// Setting the context of the task to the new context.
 	t.SetContext(ctx)
 	defer func() {
 		j.completed = time.Now()
@@ -113,14 +115,6 @@ func (j *job) Run(done chan delegator.Directive) {
 	}()
 	j.started = t.execute()
 
-}
-
-// handle any errors returned by the task.
-// If the error is not nil, it is logged.
-func (j *job) logError() {
-	if j.task.Error() != nil {
-		log.Println(j.task.Error())
-	}
 }
 
 // constructs a new job.
@@ -137,13 +131,14 @@ func NewJob(op operation, ctx context.Context) *job {
 // Log the completion of the job.
 func (j *job) Announce() {
 	log.Printf("worker %d finished task \"%v\" "+
-		"%v with a Runtime of %vms, roundtrip time: %vms\n",
+		"%v with a Runtime of %vms, roundtrip time: %vms"+
+		" error: %v\n",
 		j.id,
 		j.task.op.String(),
 		j.GetState().String(),
 		j.RunTime().Abs().Microseconds(),
-		j.roundtrip().Abs().Microseconds())
-	j.logError()
+		j.roundtrip().Abs().Microseconds(),
+		j.task.Error())
 }
 
 func (j job) roundtrip() time.Duration {

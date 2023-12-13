@@ -16,8 +16,7 @@ func main() {
 		dchan := make(chan delegator.Directive)
 		w := worker.NewJob(t, nil)
 		go w.Run(dchan)
-		d := <-dchan
-		fmt.Printf("received Directive: %v %v\n\n", d.Target(), d.Action())
+		<-dchan
 		time.Sleep(3 * time.Second)
 	}
 	fmt.Println("done")
