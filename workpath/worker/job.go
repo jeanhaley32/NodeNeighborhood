@@ -5,12 +5,12 @@ package worker
 // designed to be used with the delegator package. The task
 // is defined as an enum, which allows for easy addition of new tasks.
 import (
-	"sync"
 	"time"
 	"workpath/delegator"
 
 	"github.com/google/uuid"
 
+	"context"
 	"log"
 )
 
@@ -21,6 +21,10 @@ const (
 	running state = iota
 	completed
 	failed
+)
+
+var (
+	deadline time.Duration = 5 * time.Second
 )
 
 func (a state) String() string {
@@ -40,25 +44,26 @@ type job struct {
 	created   time.Time // job creation time.
 	started   time.Time // task start time.
 	completed time.Time // task completion time.
-	work      work      // The work to be done.
+	task      task      // The work to be done.
 }
 
-// Worker interface represents a job that can be executed.
+// Worker is an interface that represents a job or task to be executed.
 type Worker interface {
 	GetState() state
 	ID() uint32
-	Run(done chan delegator.Directive)
-	logError()
-	Announce()
-	ObtainWork() *work
+	StartTime() time.Time
+	CompletedTime() time.Time
+	CreatedTime() time.Time
 	RunTime() time.Duration
+	Run(done chan delegator.Directive)
+	Announce()
 }
 
 // return the state of the job.
 func (j *job) GetState() state {
-	w := &j.work
-	if w.IsDone() {
-		if w.Error() != nil {
+	t := &j.task
+	if t.IsDone() {
+		if t.Error() != nil {
 			return failed
 		}
 		return completed
@@ -91,41 +96,34 @@ func (j *job) RunTime() time.Duration {
 	return j.completed.Sub(j.started)
 }
 
-// Runs the job in a goroutine.
+// Runs job with a deadline set in context.
 func (j *job) Run(done chan delegator.Directive) {
-	w := &j.work
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		j.started = w.execute()
-		wg.Done()
-	}()
-	wg.Wait()
-	j.completed = time.Now()
-	j.Announce()
-	d := delegator.NewDoneDirective(j.id)
-	done <- d
-}
-
-// handle any errors returned by the task.
-// If the error is not nil, it is logged.
-func (j *job) logError() {
-	if j.work.Error() != nil {
-		log.Println(j.work.Error())
+	t := &j.task
+	if (*t.GetContext()).Value("deadline") != nil {
+		deadline = (*j.task.GetContext()).Value("deadline").(time.Duration)
 	}
-}
+	// Creating a new context with a Timeout. This will be used to
+	// cancel the task if it takes too long.
+	ctx, cancel := context.WithTimeout(*j.task.GetContext(), deadline)
+	// Setting the context of the task to the new context.
+	t.SetContext(ctx)
+	defer func() {
+		j.completed = time.Now()
+		cancel()
+		j.Announce()
+		d := delegator.NewDoneDirective(j.id)
+		done <- d
+	}()
+	j.started = t.execute()
 
-// Creates a new, nil variable map.
-func NewVmap() *VMap {
-	return &VMap{}
 }
 
 // constructs a new job.
-func NewJob(t task, v map[string]any) *job {
+func NewJob(op operation, ctx context.Context) *job {
 	j := &job{}
-	w := &j.work
-	w.SetTask(t)
-	w.SetVmap(v)
+	t := &j.task
+	t.SetTask(op)
+	t.SetContext(ctx)
 	j.id = uuid.New().ID()
 	j.created = time.Now()
 	return j
@@ -134,13 +132,14 @@ func NewJob(t task, v map[string]any) *job {
 // Log the completion of the job.
 func (j *job) Announce() {
 	log.Printf("worker %d finished task \"%v\" "+
-		"%v with a Runtime of %vms, roundtrip time: %vms\n",
+		"%v with a Runtime of %vms, roundtrip time: %vms"+
+		" error: %v\n",
 		j.id,
-		j.work.task,
+		j.task.op.String(),
 		j.GetState().String(),
 		j.RunTime().Abs().Microseconds(),
-		j.roundtrip().Abs().Microseconds())
-	j.logError()
+		j.roundtrip().Abs().Microseconds(),
+		j.task.Error())
 }
 
 func (j job) roundtrip() time.Duration {

@@ -1,14 +1,4 @@
-## TODO
-    - TODO(jeanhaley) Flesh out the Work Delegator
-    - TODO(jeanhaley) Create unit tests for worker module.
-    - TODO(jeanhaley) Create Unit tests for the work delegator. 
-    - TODO(jeanhaley) Create unit tests for the whole work path. 
-## Synopsis
-The `Work path` is responsible for executing individual tasks in the `Node Neighborhood` package. The `Work Delegator` receives `work` in the form of `jobs` on a channel, each `job` contains a `task` that points to an `operation` to perform, and `context` needed to perform that operation with a `deadline`. The `Delegator` is responsible for actuating a `job` into a goroutine, and keeping track of each goroutine running concurently.
-
- 
-## Work Delegator
-- TODO(jeanhaley) Section under construction
+    WARNING: changes made to this document, should reflect in the top level workpath readme.md. ../readme.md
 
 ## Workers
 
