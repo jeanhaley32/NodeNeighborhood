@@ -132,16 +132,11 @@ func NewJob(op operation, ctx context.Context) *job {
 // Log the completion of the job.
 func (j *job) Announce() {
 	log.Printf("worker %d finished task \"%v\" "+
-		"%v with a Runtime of %vms, roundtrip time: %vms"+
+		"%v with a Runtime of %vms"+
 		" error: %v\n",
 		j.id,
 		j.task.op.String(),
 		j.GetState().String(),
 		j.RunTime().Abs().Microseconds(),
-		j.roundtrip().Abs().Microseconds(),
 		j.task.Error())
-}
-
-func (j job) roundtrip() time.Duration {
-	return time.Since(j.created)
 }

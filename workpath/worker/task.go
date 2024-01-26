@@ -72,10 +72,19 @@ func (t *task) GetContext() *context.Context {
 }
 
 func (t *task) execute() time.Time {
+	// Defer finalizing the task.
+	// ATM this is just setting the done flag to true.
 	defer func() {
 		t.done = true
 	}()
+	// Set the start time of the task. This is used to calculate
+	// the time taken to execute the task.
 	startTime := time.Now()
+	// Execute the task.
+	// If we recieve a signal on the context, we set the error
+	// value of the task to the error recieved from the context.
+	// Otherwise, we set the payload and error value of the task
+	// to the values returned by the task function.
 	select {
 	case <-t.ctx.Done():
 		t.e = t.ctx.Err()
@@ -83,5 +92,6 @@ func (t *task) execute() time.Time {
 	default:
 		t.payload, t.e = (*t.op.Func())(t.ctx)
 	}
+	// Return the start time of the task.
 	return startTime
 }
