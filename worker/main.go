@@ -4,8 +4,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/jeanhaley32/nodeneighborhood/worker"
-
 	"github.com/jeanhaley32/logger"
 )
 

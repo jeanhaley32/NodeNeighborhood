@@ -1,4 +1,4 @@
-package github.com/jeanhaley32/nodeneighborhood/workpath/task
+package github.com/jeanhaley32/nodeneighborhood/worker
 // A task defines an atomic unit of work
 import (
 	"context"

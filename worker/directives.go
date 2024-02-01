@@ -1,7 +1,4 @@
-// Derectives define control messages to communicate actions to the foreman
-package delegator
-
-// The Directive struct is used to send instructions to the delegator.
+package github.com/jeanhaley32/nodeneighborhood/worker
 
 type action int64
 

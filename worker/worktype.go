@@ -1,4 +1,5 @@
-package main
+package  github.com/jeanhaley32/nodeneighborhood/worker
+
 
 // We define the task type as an enum.
 // This allows us to easily add new tasks.
