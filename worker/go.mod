@@ -4,5 +4,5 @@ go 1.21.6
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/jeanhaley32/logger v0.0.0-20240201074157-448275fe877f
+	github.com/jeanhaley32/logger v0.0.3
 )
