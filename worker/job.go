@@ -5,7 +5,6 @@ package worker
 import (
 	"fmt"
 	"time"
-	"workpath/delegator"
 
 	"github.com/google/uuid"
 	"github.com/jeanhaley32/logger"
@@ -55,7 +54,7 @@ type Worker interface {
 	CompletedTime() time.Time
 	CreatedTime() time.Time
 	RunTime() time.Duration
-	Run(done chan delegator.Directive)
+	Run(done chan Directive)
 	Announce()
 }
 
@@ -97,7 +96,7 @@ func (j *job) RunTime() time.Duration {
 }
 
 // Runs job with a deadline set in context.
-func (j *job) Run(done chan delegator.Directive) {
+func (j *job) Run(done chan Directive) {
 	t := &j.task
 	if (*t.GetContext()).Value("deadline") != nil {
 		deadline = (*j.task.GetContext()).Value("deadline").(time.Duration)
@@ -111,7 +110,7 @@ func (j *job) Run(done chan delegator.Directive) {
 		j.completed = time.Now()
 		cancel()
 		j.Announce()
-		d := delegator.NewDoneDirective(j.id)
+		d := NewDoneDirective(j.id)
 		done <- d
 	}()
 	j.started = t.execute()
@@ -135,7 +134,7 @@ func NewJob(op operation, ctx context.Context) *job {
 // started in main.
 func (j *job) Announce() {
 	l := logger.StartLogger(log.Default())
-	defer l.Quit()
+	defer l.Quit("")
 	msg := fmt.Sprintf("worker %d finished task \"%v\" "+
 		"%v with a Runtime of %vms"+
 		" error: %v\n",

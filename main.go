@@ -15,7 +15,7 @@ var (
 func main() {
 	l := logger.StartLogger(log.Default())
 	for _, t := range taskList {
-		dchan := make(chan delegator.Directive)
+		dchan := make(chan worker.Directive)
 		w := worker.NewJob(t, nil)
 		go w.Run(dchan)
 		<-dchan

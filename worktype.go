@@ -1,4 +1,4 @@
-package worker
+package main
 
 // We define the task type as an enum.
 // This allows us to easily add new tasks.
@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/jeanhaley32/nodeneighborhood/worker"
 )
 
 type task int64
@@ -33,7 +35,7 @@ const (
 //
 // We encase this ina  switch statement to allow for multiple tasks.
 // The function must return a pointer to the function, and the function
-func (t task) Func() TaskSignature {
+func (t task) Func() worker.TaskSignature {
 	switch t {
 	case HelloWorld:
 		t := func(c context.Context) ([]byte, error) {
