@@ -1,10 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"time"
-	"workpath/delegator"
-	"workpath/worker"
+
+	"github.com/jeanhaley32/nodeneighborhood/worker"
+
+	"github.com/jeanhaley32/logger"
 )
 
 var (
@@ -12,6 +14,7 @@ var (
 )
 
 func main() {
+	l := logger.StartLogger(log.Default())
 	for _, t := range taskList {
 		dchan := make(chan delegator.Directive)
 		w := worker.NewJob(t, nil)
@@ -19,5 +22,5 @@ func main() {
 		<-dchan
 		time.Sleep(3 * time.Second)
 	}
-	fmt.Println("done")
+	l.Info("Done")
 }

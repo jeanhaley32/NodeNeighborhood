@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-	"workpath/worker"
 )
 
 type task int64

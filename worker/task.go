@@ -1,13 +1,10 @@
-package worker
-
+package github.com/jeanhaley32/nodeneighborhood/workpath/task
+// A task defines an atomic unit of work
 import (
 	"context"
 	"time"
 )
 
-// A task object encapsulates the function a job is to perform.
-// It wraps up the opertaion, along with the payload, and passes
-// contextual variables through the context.Context object.
 type task struct {
 	op      operation
 	done    bool

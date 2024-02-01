@@ -1,14 +1,13 @@
-package worker
+// A job is a struct that contains a task. 
+package github.com/jeanhaley32/nodeneighborhood/workpath/task
 
-// Worker is a package designed to execute a task in a goroutine,
-// with a variable map and task specific metrics. It is
-// designed to be used with the delegator package. The task
-// is defined as an enum, which allows for easy addition of new tasks.
 import (
+	"fmt"
 	"time"
 	"workpath/delegator"
 
 	"github.com/google/uuid"
+	"github.com/jeanhaley32/logger"
 
 	"context"
 	"log"
@@ -130,8 +129,13 @@ func NewJob(op operation, ctx context.Context) *job {
 }
 
 // Log the completion of the job.
+// This is a temporary construct.
+// When this is finalized as a micro-service, logs should be handled by a seperate process
+// started in main.
 func (j *job) Announce() {
-	log.Printf("worker %d finished task \"%v\" "+
+	l := logger.StartLogger(log.Default())
+	defer l.Quit()
+	msg := fmt.Sprintf("worker %d finished task \"%v\" "+
 		"%v with a Runtime of %vms"+
 		" error: %v\n",
 		j.id,
@@ -139,4 +143,5 @@ func (j *job) Announce() {
 		j.GetState().String(),
 		j.RunTime().Abs().Microseconds(),
 		j.task.Error())
+	l.Info(msg)
 }
