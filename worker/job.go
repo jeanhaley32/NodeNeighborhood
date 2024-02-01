@@ -1,5 +1,6 @@
-// A job is a struct that contains a task. 
-package github.com/jeanhaley32/nodeneighborhood/workpath/task
+package worker
+
+// A job is a struct that contains a task.
 
 import (
 	"fmt"

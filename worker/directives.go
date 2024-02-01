@@ -1,4 +1,4 @@
-package github.com/jeanhaley32/nodeneighborhood/worker
+package worker
 
 type action int64
 

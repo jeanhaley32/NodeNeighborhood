@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jeanhaley32/logger"
+	"github.com/jeanhaley32/nodeneighborhood/worker"
 )
 
 var (

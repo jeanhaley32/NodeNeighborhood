@@ -1,4 +1,5 @@
-package github.com/jeanhaley32/nodeneighborhood/worker
+package worker
+
 // A task defines an atomic unit of work
 import (
 	"context"
