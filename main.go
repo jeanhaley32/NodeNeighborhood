@@ -22,4 +22,5 @@ func main() {
 		time.Sleep(3 * time.Second)
 	}
 	l.Info("Done")
+	time.Sleep(3 * time.Second)
 }

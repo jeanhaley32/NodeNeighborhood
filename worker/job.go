@@ -4,13 +4,13 @@ package worker
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jeanhaley32/logger"
 
 	"context"
-	"log"
 )
 
 // Define enums used to indicate state of the job.
@@ -133,9 +133,7 @@ func NewJob(op operation, ctx context.Context) *job {
 // When this is finalized as a micro-service, logs should be handled by a seperate process
 // started in main.
 func (j *job) Announce() {
-	l := logger.StartLogger(log.Default())
-	defer l.Quit("")
-	msg := fmt.Sprintf("worker %d finished task \"%v\" "+
+	msg := fmt.Sprintf("%d finished task \"%v\" "+
 		"%v with a Runtime of %vms"+
 		" error: %v\n",
 		j.id,
@@ -143,5 +141,5 @@ func (j *job) Announce() {
 		j.GetState().String(),
 		j.RunTime().Abs().Microseconds(),
 		j.task.Error())
-	l.Info(msg)
+	log.New(os.Stdout, "worker ", log.LstdFlags).Print(msg)
 }
